@@ -1,4 +1,12 @@
-# AutoWorth AI — Used Car Valuation Platform
+# AutoWorth-AI
+
+**Name:** Ashutosh Singh
+
+**Internship:** MP Online AI & ML Internship
+
+**Batch:** Batch 2
+
+AI-powered used car valuation platform trained on a unified dataset created by combining multiple public datasets.
 
 An AI-powered used car valuation platform trained on a unified dataset created by combining multiple publicly available Kaggle datasets. Built with Flask and a scikit-learn regression model, wrapped in a production-grade architecture: persistent prediction history (SQLite), an analytics dashboard, a REST API, PDF/CSV exports, structured request logging, environment-driven configuration, and health checks — ready for a GitHub portfolio, a resume, a college submission, or a live Render deployment.
 
