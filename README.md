@@ -12,8 +12,8 @@ An AI-powered used car valuation platform trained on a unified dataset created b
 
 > The trained model, its preprocessing, its feature order, and its prediction logic come entirely from the dedicated training notebook (`AutoWorth_AI_Car_Price_Model.ipynb`). Everything documented below the **Machine Learning Pipeline** section is the application layer built around that model.
 
-**Author:** Lakshya Sahu
-**Reg No:** 23BAI10250
+**Author:** ASHUTOSH SIGH
+**Reg No:** 23BCE11453
 
 ---
 
@@ -317,4 +317,4 @@ This project is released under the MIT License. See `LICENSE` for details (add o
 
 ## Author
 
-Lakshya Sahu
+ASHUTOSH SINGH
