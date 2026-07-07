@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+{% block title %}Dashboard &mdash; ValueTrack{% endblock %}
+
+{% block content %}
+
+<section class="hero" style="padding-top: 1rem;">
+  <div class="hero-eyebrow">// ANALYTICS</div>
+  <h1 class="hero-title" style="font-size: 2rem;">Dashboard</h1>
+  <p class="hero-sub">A live read-out of everything ValueTrack has predicted so far.</p>
+</section>
+
+<div class="row g-3 mb-4">
+  <div class="col-6 col-lg-3">
+    <div class="feature-card text-center">
+      <i class="bi bi-collection"></i>
+      <div class="stat-value">{{ stats.total }}</div>
+      <div class="stat-label">Total Predictions</div>
+    </div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="feature-card text-center">
+      <i class="bi bi-calendar-check"></i>
+      <div class="stat-value">{{ stats.today }}</div>
+      <div class="stat-label">Today's Predictions</div>
+    </div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="feature-card text-center">
+      <i class="bi bi-graph-up"></i>
+      <div class="stat-value">₹{{ '%.2f' % stats.avg_price }}L</div>
+      <div class="stat-label">Average Predicted Price</div>
+    </div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="feature-card text-center">
+      <i class="bi bi-calendar3"></i>
+      <div class="stat-value">{{ stats.avg_car_age }}y</div>
+      <div class="stat-label">Average Car Age</div>
+    </div>
+  </div>
+  <div class="col-6 col-lg-6">
+    <div class="feature-card text-center">
+      <i class="bi bi-arrow-up-circle"></i>
+      <div class="stat-value">₹{{ '%.2f' % stats.max_price }}L</div>
+      <div class="stat-label">Highest Predicted Price</div>
+    </div>
+  </div>
+  <div class="col-6 col-lg-6">
+    <div class="feature-card text-center">
+      <i class="bi bi-arrow-down-circle"></i>
+      <div class="stat-value">₹{{ '%.2f' % stats.min_price }}L</div>
+      <div class="stat-label">Lowest Predicted Price</div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-6">
+    <div class="console">
+      <div class="console-header"><span class="dot"></span><h2>Fuel Type Distribution</h2></div>
+      <div class="console-body">
+        {% if stats.total > 0 %}
+          <canvas id="fuelChart" height="220"></canvas>
+        {% else %}
+          <div class="empty-state"><i class="bi bi-pie-chart"></i><p class="mb-0">No data yet.</p></div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="console">
+      <div class="console-header"><span class="dot"></span><h2>Predictions &mdash; Last 7 Days</h2></div>
+      <div class="console-body">
+        {% if stats.total > 0 %}
+          <canvas id="trendChart" height="220"></canvas>
+        {% else %}
+          <div class="empty-state"><i class="bi bi-bar-chart"></i><p class="mb-0">No data yet.</p></div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+{% if stats.total > 0 %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script>
+(function () {
+  const rootStyles = getComputedStyle(document.documentElement);
+  const gridColor = rootStyles.getPropertyValue('--hairline').trim() || '#363c45';
+  const textColor = rootStyles.getPropertyValue('--text-muted').trim() || '#8b9299';
+  const surfaceColor = rootStyles.getPropertyValue('--asphalt-900').trim() || '#1a1e23';
+
+  Chart.defaults.color = textColor;
+  Chart.defaults.font.family = "'Inter', sans-serif";
+
+  new Chart(document.getElementById('fuelChart'), {
+    type: 'doughnut',
+    data: {
+      labels: {{ stats.fuel_distribution.keys() | list | tojson }},
+      datasets: [{
+        data: {{ stats.fuel_distribution.values() | list | tojson }},
+        backgroundColor: ['#ffb020', '#2dd4a7', '#4aa3ff'],
+        borderColor: surfaceColor,
+        borderWidth: 2
+      }]
+    },
+    options: {
+      plugins: { legend: { position: 'bottom' } },
+      cutout: '65%'
+    }
+  });
+
+  new Chart(document.getElementById('trendChart'), {
+    type: 'bar',
+    data: {
+      labels: {{ stats.trend | map(attribute='day') | list | tojson }},
+      datasets: [{
+        label: 'Predictions',
+        data: {{ stats.trend | map(attribute='count') | list | tojson }},
+        backgroundColor: '#ffb020',
+        borderRadius: 4,
+        maxBarThickness: 36
+      }]
+    },
+    options: {
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { color: gridColor } },
+        y: { grid: { color: gridColor }, beginAtZero: true, ticks: { precision: 0 } }
+      }
+    }
+  });
+})();
+</script>
+{% endif %}
+{% endblock %}

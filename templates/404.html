@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}404 &mdash; Not Found{% endblock %}
+{% block content %}
+<div class="empty-state table-log mt-5">
+  <i class="bi bi-signpost-2"></i>
+  <h2 class="hero-title" style="font-size: 1.6rem;">404 &mdash; Route Not Found</h2>
+  <p class="mb-3">That page doesn't exist on this dashboard.</p>
+  <a href="{{ url_for('home') }}" class="btn btn-predict"><i class="bi bi-house-gear me-1"></i> Back to Predict</a>
+</div>
+{% endblock %}

@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+{% block title %}Prediction History &mdash; ValueTrack{% endblock %}
+
+{% block content %}
+
+<section class="hero" style="padding-top: 1rem;">
+  <div class="hero-eyebrow">// PREDICTION LOG</div>
+  <h1 class="hero-title" style="font-size: 2rem;">History &amp; <span class="accent">Records</span></h1>
+  <p class="hero-sub">{{ total }} prediction(s) stored in SQLite. Filter, search, sort, or export the full log.</p>
+</section>
+
+<form action="{{ url_for('history') }}" method="GET" class="console mb-4" id="filterForm">
+  <div class="console-header">
+    <span class="dot"></span>
+    <h2>Filters</h2>
+  </div>
+  <div class="console-body">
+    <div class="row g-3 align-items-end">
+      <div class="col-md-3">
+        <label class="field-label" for="search">Search</label>
+        <input type="text" id="search" name="search" value="{{ search }}" class="form-control" placeholder="price, km, age...">
+      </div>
+      <div class="col-md-3">
+        <label class="field-label" for="date_from">From Date</label>
+        <input type="date" id="date_from" name="date_from" value="{{ date_from }}" class="form-control">
+      </div>
+      <div class="col-md-3">
+        <label class="field-label" for="date_to">To Date</label>
+        <input type="date" id="date_to" name="date_to" value="{{ date_to }}" class="form-control">
+      </div>
+      <div class="col-md-3">
+        <label class="field-label" for="sort">Sort By</label>
+        <select name="sort" id="sort" class="form-select">
+          <option value="latest" {% if sort == 'latest' %}selected{% endif %}>Latest First</option>
+          <option value="oldest" {% if sort == 'oldest' %}selected{% endif %}>Oldest First</option>
+          <option value="price_high" {% if sort == 'price_high' %}selected{% endif %}>Price: High to Low</option>
+          <option value="price_low" {% if sort == 'price_low' %}selected{% endif %}>Price: Low to High</option>
+        </select>
+      </div>
+    </div>
+    <div class="d-flex flex-wrap gap-2 mt-3">
+      <button type="submit" class="btn btn-predict"><i class="bi bi-funnel me-1"></i> Apply Filters</button>
+      {% if search or date_from or date_to or sort != 'latest' %}
+        <a href="{{ url_for('history') }}" class="btn btn-report"><i class="bi bi-x-lg me-1"></i> Clear</a>
+      {% endif %}
+      <a href="{{ url_for('history_export', search=search, date_from=date_from, date_to=date_to, sort=sort) }}" class="btn btn-report ms-auto">
+        <i class="bi bi-file-earmark-spreadsheet me-1"></i> Export CSV
+      </a>
+      {% if records %}
+      <button type="submit" form="deleteAllForm" class="btn btn-report" style="border-color: var(--red-signal); color: var(--red-signal);"
+              onclick="return confirm('Delete ALL prediction history? This cannot be undone.');">
+        <i class="bi bi-trash3 me-1"></i> Delete All
+      </button>
+      {% endif %}
+    </div>
+  </div>
+</form>
+
+<form action="{{ url_for('history_delete_all') }}" method="POST" id="deleteAllForm"></form>
+
+{% if records %}
+<div class="table-responsive">
+  <table class="table table-log align-middle mb-0">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Timestamp</th>
+        <th>Present Price</th>
+        <th>KMs Driven</th>
+        <th>Fuel</th>
+        <th>Seller</th>
+        <th>Transmission</th>
+        <th>Owners</th>
+        <th>Age</th>
+        <th>Predicted Price</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in records %}
+      <tr>
+        <td>{{ r['id'] }}</td>
+        <td>{{ r['timestamp'] }}</td>
+        <td>₹ {{ '%.2f' % r['present_price'] }} L</td>
+        <td>{{ '{:,}'.format(r['kms_driven']) }} km</td>
+        <td>{{ {0:'Petrol',1:'Diesel',2:'CNG'}.get(r['fuel_type'], '-') }}</td>
+        <td>{{ {0:'Dealer',1:'Individual'}.get(r['seller_type'], '-') }}</td>
+        <td>{{ {0:'Manual',1:'Automatic'}.get(r['transmission'], '-') }}</td>
+        <td>{{ r['owner'] }}</td>
+        <td>{{ r['car_age'] }}y</td>
+        <td class="price-cell">₹ {{ '%.2f' % r['predicted_price'] }} L</td>
+        <td class="text-end">
+          <div class="d-flex gap-2 justify-content-end">
+            <a href="{{ url_for('history_report', record_id=r['id']) }}" class="btn btn-sm btn-report" title="Download PDF report">
+              <i class="bi bi-file-earmark-pdf"></i>
+            </a>
+            <form action="{{ url_for('history_delete', record_id=r['id']) }}" method="POST" onsubmit="return confirm('Delete this prediction?');">
+              <button type="submit" class="btn btn-sm btn-report" style="border-color: var(--red-signal); color: var(--red-signal);" title="Delete">
+                <i class="bi bi-trash3"></i>
+              </button>
+            </form>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% if total_pages > 1 %}
+<nav class="mt-4" aria-label="History pagination">
+  <ul class="pagination justify-content-center">
+    <li class="page-item {% if page <= 1 %}disabled{% endif %}">
+      <a class="page-link" href="{{ url_for('history', page=page-1, search=search, date_from=date_from, date_to=date_to, sort=sort) }}">&laquo;</a>
+    </li>
+    {% for p in range(1, total_pages + 1) %}
+      <li class="page-item {% if p == page %}active{% endif %}">
+        <a class="page-link" href="{{ url_for('history', page=p, search=search, date_from=date_from, date_to=date_to, sort=sort) }}">{{ p }}</a>
+      </li>
+    {% endfor %}
+    <li class="page-item {% if page >= total_pages %}disabled{% endif %}">
+      <a class="page-link" href="{{ url_for('history', page=page+1, search=search, date_from=date_from, date_to=date_to, sort=sort) }}">&raquo;</a>
+    </li>
+  </ul>
+</nav>
+{% endif %}
+
+{% else %}
+<div class="empty-state table-log">
+  <i class="bi bi-inbox"></i>
+  <p class="mb-0">{% if search or date_from or date_to %}No predictions match these filters.{% else %}No predictions yet &mdash; run one from the Predict page.{% endif %}</p>
+</div>
+{% endif %}
+
+{% endblock %}

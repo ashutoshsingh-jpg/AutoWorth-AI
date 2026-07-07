@@ -1,0 +1,573 @@
+/*
+  ValueTrack -- Design tokens
+  ---------------------------
+  Concept: an instrument-cluster / dashboard console, not a generic
+  SaaS card layout. Deep asphalt background, amber + teal signal-light
+  accents, a monospace digital readout for the predicted price, and a
+  gauge-arc that visually encodes the price category.
+*/
+
+:root {
+  --asphalt-950: #14171b;
+  --asphalt-900: #1a1e23;
+  --asphalt-800: #22262d;
+  --asphalt-700: #2b3038;
+  --asphalt-600: #3a4049;
+  --hairline: #363c45;
+
+  --text-primary: #eef1f3;
+  --text-muted: #a3aab1;
+  --text-faint: #767d85;
+
+  --amber: #ffb020;
+  --amber-dim: #8a5f13;
+  --teal: #2dd4a7;
+  --teal-dim: #16624c;
+  --red-signal: #ff5c5c;
+
+  /* Secondary surface tone -- used to break up the single grey/asphalt
+     background with a cooler, slightly blue-tinted panel color so the
+     page reads as having more than one flat background. */
+  --surface-alt: #1a2230;
+  --surface-alt-border: #2a3546;
+
+  --font-display: 'Rajdhani', 'Segoe UI', sans-serif;
+  --font-body: 'Inter', 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+}
+
+/*
+  Light theme override.
+  ----------------------
+  Same custom-property names as :root above, so every component below
+  keeps working unchanged -- only the values differ. Applied by setting
+  data-theme="light" on <html> (see the inline script in base.html and
+  the toggle button wired up in main.js).
+*/
+html[data-theme="light"] {
+  --asphalt-950: #f3f5f7;
+  --asphalt-900: #ffffff;
+  --asphalt-800: #ffffff;
+  --asphalt-700: #edf0f3;
+  --asphalt-600: #cfd5db;
+  --hairline: #dde2e7;
+
+  --text-primary: #1b2027;
+  --text-muted: #57616c;
+  --text-faint: #7c8591;
+
+  --amber: #b3690a;
+  --amber-dim: #f0d9b5;
+  --teal: #0d8f6c;
+  --teal-dim: #bfe9dd;
+  --red-signal: #d1373f;
+
+  --surface-alt: #eef1f5;
+  --surface-alt-border: #dde2e7;
+}
+
+* { box-sizing: border-box; }
+
+/*
+  color-scheme tells the browser which native/OS-rendered control style to
+  use (select dropdown lists, date pickers, scrollbars, autofill). Without
+  it, browsers assume light and can render text inside <select>/<option> or
+  <input type="date"> in a color close to a dark background -- only
+  readable once hovered/selected, when the browser's own highlight color
+  takes over. Keyed off the same data-theme attribute as the palette above.
+*/
+html { color-scheme: dark; }
+html[data-theme="light"] { color-scheme: light; }
+
+html, body {
+  min-height: 100%;
+}
+
+body {
+  font-family: var(--font-body);
+  background:
+    radial-gradient(1200px 600px at 15% -10%, rgba(255, 176, 32, 0.07), transparent 60%),
+    radial-gradient(1000px 500px at 90% 10%, rgba(45, 212, 167, 0.06), transparent 55%),
+    radial-gradient(900px 700px at 50% 115%, rgba(74, 120, 255, 0.05), transparent 60%),
+    var(--asphalt-950);
+  color: var(--text-primary);
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  transition: background-color .2s ease, color .2s ease;
+}
+
+html[data-theme="light"] body {
+  background:
+    radial-gradient(1200px 600px at 15% -10%, rgba(179, 105, 10, 0.05), transparent 60%),
+    radial-gradient(1000px 500px at 90% 10%, rgba(13, 143, 108, 0.05), transparent 55%),
+    var(--asphalt-950);
+}
+
+.app-main { flex: 1 0 auto; }
+
+/* ---------------- Navbar ---------------- */
+.app-navbar {
+  background: rgba(20, 23, 27, 0.92);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--hairline);
+  padding-top: .85rem;
+  padding-bottom: .85rem;
+}
+html[data-theme="light"] .app-navbar {
+  background: rgba(255, 255, 255, 0.88);
+}
+.navbar-brand { display: flex; align-items: center; gap: .5rem; }
+.brand-mark { color: var(--amber); font-size: 1.4rem; }
+.brand-text {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  font-size: 1.25rem;
+  color: var(--text-primary);
+}
+.brand-accent { color: var(--amber); }
+.app-navbar .nav-link {
+  color: var(--text-muted);
+  font-weight: 500;
+  font-size: 0.92rem;
+  padding: .5rem 1rem !important;
+  transition: color .15s ease;
+}
+.app-navbar .nav-link:hover,
+.app-navbar .nav-link.active {
+  color: var(--amber);
+}
+
+/* Theme toggle button */
+.theme-toggle {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--hairline);
+  background: transparent;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: .95rem;
+  transition: color .15s ease, border-color .15s ease, transform .15s ease;
+}
+.theme-toggle:hover {
+  color: var(--amber);
+  border-color: var(--amber-dim);
+  transform: rotate(-8deg);
+}
+.theme-toggle:active { transform: rotate(0deg) scale(.94); }
+
+/* ---------------- Alerts ---------------- */
+.app-alert {
+  background: var(--asphalt-800);
+  border: 1px solid var(--hairline);
+  color: var(--text-primary);
+  border-radius: var(--radius-md);
+}
+.app-alert.alert-success { border-left: 4px solid var(--teal); }
+.app-alert.alert-danger { border-left: 4px solid var(--red-signal); }
+.app-alert.alert-warning { border-left: 4px solid var(--amber); }
+.app-alert.alert-info { border-left: 4px solid #4aa3ff; }
+.btn-close { filter: invert(1) grayscale(1) brightness(1.6); }
+html[data-theme="light"] .btn-close { filter: none; }
+
+/* ---------------- Hero ---------------- */
+.hero {
+  padding: 2.5rem 0 1.5rem;
+}
+.hero-eyebrow {
+  font-family: var(--font-mono);
+  color: var(--teal);
+  font-size: .78rem;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  margin-bottom: .5rem;
+}
+.hero-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 2.6rem;
+  line-height: 1.05;
+  letter-spacing: 0.01em;
+  margin-bottom: .75rem;
+}
+.hero-title .accent { color: var(--amber); }
+.hero-sub {
+  color: var(--text-muted);
+  font-size: 1.02rem;
+  max-width: 46ch;
+}
+
+/* ---------------- Console card (form) ---------------- */
+.console {
+  background: linear-gradient(180deg, var(--asphalt-800), var(--asphalt-900));
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 20px 50px rgba(0,0,0,0.35);
+  overflow: hidden;
+}
+.console-header {
+  padding: 1.1rem 1.5rem;
+  border-bottom: 1px solid var(--hairline);
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  background: var(--asphalt-800);
+}
+.console-header .dot {
+  width: 9px; height: 9px; border-radius: 50%;
+  background: var(--teal);
+  box-shadow: 0 0 8px var(--teal);
+}
+.console-header h2 {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin: 0;
+}
+.console-body { padding: 1.75rem; }
+
+.field-label {
+  font-family: var(--font-mono);
+  font-size: .72rem;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: .35rem;
+  display: block;
+}
+.form-control, .form-select {
+  background: var(--asphalt-900);
+  border: 1px solid var(--hairline);
+  color: var(--text-primary);
+  border-radius: var(--radius-sm);
+  padding: .6rem .8rem;
+  font-size: .95rem;
+}
+.form-control::placeholder { color: var(--text-faint); }
+.form-control:focus, .form-select:focus {
+  background: var(--asphalt-900);
+  border-color: var(--amber);
+  box-shadow: 0 0 0 3px rgba(255,176,32,0.15);
+  color: var(--text-primary);
+}
+.form-select option {
+  background: var(--asphalt-800);
+  color: var(--text-primary);
+}
+.invalid-feedback { color: var(--red-signal); font-size: .8rem; }
+.form-hint { color: var(--text-faint); font-size: .78rem; margin-top: .3rem; }
+
+/* Native date-picker icon also needs to follow the dark scheme
+   explicitly in WebKit browsers, otherwise the calendar icon renders
+   near-invisible on a dark field. */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.85);
+}
+
+/* Custom scrollbar so it matches the theme instead of a bright
+   OS-default light scrollbar sitting on a dark page. */
+* {
+  scrollbar-color: var(--asphalt-600) var(--asphalt-900);
+  scrollbar-width: thin;
+}
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: var(--asphalt-900); }
+::-webkit-scrollbar-thumb { background: var(--asphalt-600); border-radius: 999px; }
+::-webkit-scrollbar-thumb:hover { background: var(--hairline); }
+
+.btn-predict {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  background: linear-gradient(180deg, var(--amber), #d98f10);
+  border: none;
+  color: #1a1305;
+  border-radius: var(--radius-sm);
+  padding: .8rem 1.2rem;
+  font-size: 1rem;
+  transition: transform .12s ease, box-shadow .12s ease;
+}
+.btn-predict:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px rgba(255,176,32,0.3);
+  color: #1a1305;
+}
+.btn-predict:active { transform: translateY(0); }
+.btn-predict:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+
+/* ---------------- Result / Gauge ---------------- */
+.result-panel {
+  background: linear-gradient(180deg, var(--asphalt-800), var(--asphalt-900));
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-lg);
+  padding: 2rem;
+  text-align: center;
+  height: 100%;
+}
+.gauge-wrap {
+  position: relative;
+  width: 190px;
+  height: 190px;
+  margin: 0 auto 1rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.gauge-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(var(--gauge-color, var(--amber)) calc(var(--gauge-pct, 50) * 1%), var(--asphalt-700) 0);
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 14px), #000 calc(100% - 13px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 14px), #000 calc(100% - 13px));
+}
+.gauge-center {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.gauge-value {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 1.55rem;
+  color: var(--text-primary);
+  line-height: 1.1;
+}
+.gauge-unit {
+  font-family: var(--font-mono);
+  font-size: .7rem;
+  color: var(--text-muted);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  margin-top: .2rem;
+}
+.result-label {
+  font-family: var(--font-mono);
+  font-size: .72rem;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .5rem;
+}
+.result-id {
+  color: var(--teal);
+  letter-spacing: .05em;
+}
+
+/* Success entrance animation for a freshly computed result */
+@keyframes resultPop {
+  0%   { opacity: 0; transform: scale(0.92) translateY(8px); }
+  60%  { opacity: 1; transform: scale(1.02) translateY(0); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+.result-pop { animation: resultPop .45s cubic-bezier(.2,.8,.3,1) both; }
+
+@keyframes gaugeRingIn {
+  from { opacity: 0; transform: scale(.85); }
+  to   { opacity: 1; transform: scale(1); }
+}
+.result-pop .gauge-wrap { animation: gaugeRingIn .5s ease .1s both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .result-pop, .result-pop .gauge-wrap { animation: none; }
+}
+.result-meta {
+  display: flex;
+  justify-content: space-between;
+  padding: .6rem 0;
+  border-top: 1px solid var(--hairline);
+  font-size: .88rem;
+}
+.result-meta:first-of-type { border-top: none; }
+.result-meta .k { color: var(--text-muted); }
+.result-meta .v { color: var(--text-primary); font-weight: 500; }
+
+.badge-category {
+  font-family: var(--font-mono);
+  font-size: .72rem;
+  letter-spacing: .05em;
+  padding: .3rem .7rem;
+  border-radius: 999px;
+}
+.badge-secondary-glow { background: rgba(139,146,153,0.15); color: var(--text-muted); }
+.badge-info-glow { background: rgba(74,163,255,0.15); color: #4aa3ff; }
+.badge-warning-glow { background: rgba(255,176,32,0.15); color: var(--amber); }
+.badge-success-glow { background: rgba(45,212,167,0.15); color: var(--teal); }
+
+.btn-report {
+  border: 1px solid var(--hairline);
+  background: transparent;
+  color: var(--text-primary);
+  border-radius: var(--radius-sm);
+  padding: .55rem 1rem;
+  font-size: .88rem;
+  margin-top: 1.2rem;
+  transition: border-color .15s ease, color .15s ease;
+}
+.btn-report:hover { border-color: var(--teal); color: var(--teal); }
+
+.placeholder-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--text-faint);
+  text-align: center;
+  padding: 2rem;
+}
+.placeholder-panel i { font-size: 2.4rem; margin-bottom: .75rem; color: var(--text-faint); }
+
+/* ---------------- Feature cards ---------------- */
+.feature-card {
+  background: var(--asphalt-800);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-md);
+  padding: 1.4rem;
+  height: 100%;
+  transition: transform .15s ease, border-color .15s ease;
+}
+.feature-card:hover { transform: translateY(-3px); border-color: var(--amber-dim); }
+.feature-card i { font-size: 1.4rem; color: var(--amber); margin-bottom: .6rem; display: block; }
+.feature-card h3 { font-family: var(--font-display); font-size: 1.05rem; font-weight: 600; margin-bottom: .35rem; }
+.feature-card p { color: var(--text-muted); font-size: .88rem; margin: 0; }
+a.feature-card-link {
+  display: block;
+  color: inherit;
+}
+a.feature-card-link:hover h3 { color: var(--amber); }
+
+.stat-value {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 1.7rem;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+.stat-label {
+  font-family: var(--font-mono);
+  font-size: .68rem;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-top: .25rem;
+}
+
+/* ---------------- History page ---------------- */
+.log-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .75rem;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.2rem;
+}
+.table-log {
+  background: var(--asphalt-800);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  font-size: .9rem;
+}
+.table-log thead th {
+  font-family: var(--font-mono);
+  font-size: .7rem;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  background: var(--asphalt-700);
+  border-bottom: 1px solid var(--hairline);
+  padding: .8rem;
+  white-space: nowrap;
+}
+.table-log tbody td {
+  padding: .75rem .8rem;
+  border-bottom: 1px solid var(--hairline);
+  color: var(--text-primary);
+  vertical-align: middle;
+}
+.table-log tbody tr:last-child td { border-bottom: none; }
+.table-log tbody tr:hover { background: rgba(255,255,255,0.02); }
+.table-log .price-cell { font-family: var(--font-mono); color: var(--teal); font-weight: 600; }
+
+.empty-state {
+  text-align: center;
+  padding: 3.5rem 1rem;
+  color: var(--text-faint);
+}
+.empty-state i { font-size: 2.6rem; margin-bottom: .75rem; display: block; }
+
+/* ---------------- Section band ----------------
+   A distinct, cool-toned background band for wrapping a section (e.g.
+   the feature cards) so the page isn't one uniform grey from top to
+   bottom. */
+.section-band {
+  background: var(--surface-alt);
+  border-top: 1px solid var(--surface-alt-border);
+  border-bottom: 1px solid var(--surface-alt-border);
+  padding: 2.25rem 0;
+  margin: 2.5rem 0 0;
+}
+
+/* ---------------- Footer ---------------- */
+.app-footer {
+  border-top: 1px solid var(--surface-alt-border);
+  background: var(--surface-alt);
+  padding: 1.6rem 0;
+  margin-top: 3rem;
+  flex-shrink: 0;
+}
+.footer-brand {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: .05em;
+}
+.footer-tagline, .footer-meta { color: var(--text-muted); font-size: .82rem; }
+
+/* ---------------- Misc ---------------- */
+a { text-decoration: none; }
+.spinner-mono {
+  width: 1rem; height: 1rem;
+  border: 2px solid rgba(255,255,255,0.25);
+  border-top-color: currentColor;
+  border-radius: 50%;
+  display: inline-block;
+  animation: spin .7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.pagination .page-link {
+  background: var(--asphalt-800);
+  border-color: var(--hairline);
+  color: var(--text-primary);
+}
+.pagination .page-item.active .page-link {
+  background: var(--amber);
+  border-color: var(--amber);
+  color: #1a1305;
+}
+.pagination .page-link:hover { background: var(--asphalt-700); color: var(--amber); }
+
+@media (max-width: 768px) {
+  .hero-title { font-size: 2rem; }
+  .console-body { padding: 1.25rem; }
+}

@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+{% block title %}ValueTrack &mdash; Car Price Predictor{% endblock %}
+
+{% block content %}
+
+<section class="hero">
+  <div class="hero-eyebrow">// AI VALUATION ENGINE</div>
+  <h1 class="hero-title">Know what your car<br>is <span class="accent">really worth</span>.</h1>
+  <p class="hero-sub">Feed in the car's specs and ValueTrack's trained regression model reads out an instant resale estimate &mdash; the same way an appraiser would, minus the guesswork.</p>
+</section>
+
+<div class="row g-4">
+  <div class="col-lg-7">
+    <div class="console">
+      <div class="console-header">
+        <span class="dot"></span>
+        <h2>Vehicle Input Panel</h2>
+      </div>
+      <div class="console-body">
+        <form action="{{ url_for('predict') }}" method="POST" id="predictForm" novalidate>
+
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="field-label" for="present_price">Present Price (Lakhs)</label>
+              <input type="number" step="0.01" min="0.01" class="form-control" id="present_price" name="present_price" placeholder="e.g. 6.5" required>
+              <div class="invalid-feedback">Enter a valid price greater than 0.</div>
+            </div>
+            <div class="col-md-6">
+              <label class="field-label" for="kms_driven">Kilometers Driven</label>
+              <input type="number" step="1" min="0" class="form-control" id="kms_driven" name="kms_driven" placeholder="e.g. 45000" required>
+              <div class="invalid-feedback">Enter a valid, non-negative distance.</div>
+            </div>
+
+            <div class="col-md-4">
+              <label class="field-label" for="fuel_type">Fuel Type</label>
+              <select name="fuel_type" id="fuel_type" class="form-select">
+                <option value="0">Petrol</option>
+                <option value="1">Diesel</option>
+                <option value="2">CNG</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="field-label" for="seller_type">Seller Type</label>
+              <select name="seller_type" id="seller_type" class="form-select">
+                <option value="0">Dealer</option>
+                <option value="1">Individual</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="field-label" for="transmission">Transmission</label>
+              <select name="transmission" id="transmission" class="form-select">
+                <option value="0">Manual</option>
+                <option value="1">Automatic</option>
+              </select>
+            </div>
+
+            <div class="col-md-6">
+              <label class="field-label" for="owner">Previous Owners</label>
+              <input type="number" step="1" min="0" class="form-control" id="owner" name="owner" placeholder="e.g. 0" required>
+              <div class="form-hint">0 = first owner, 1 = second owner, and so on.</div>
+              <div class="invalid-feedback">Enter a valid, non-negative number.</div>
+            </div>
+            <div class="col-md-6">
+              <label class="field-label" for="car_age">Car Age (years)</label>
+              <input type="number" step="1" min="0" max="60" class="form-control" id="car_age" name="car_age" placeholder="e.g. 5" required>
+              <div class="invalid-feedback">Enter an age between 0 and 60.</div>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-predict w-100 mt-4" id="predictBtn">
+            <span id="btnLabel"><i class="bi bi-cpu me-1"></i> Run Prediction</span>
+          </button>
+        </form>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="col-lg-5">
+    {% if result %}
+      <div class="result-panel result-pop">
+        <div class="result-label">Valuation Result <span class="result-id">#{{ '%05d' % result.id }}</span></div>
+        <div class="gauge-wrap">
+          <div class="gauge-ring" style="--gauge-pct: {{ [(result.predicted_price / 20 * 100), 100] | min }}; --gauge-color: {% if result.price_category_color == 'success' %}var(--teal){% elif result.price_category_color == 'warning' %}var(--amber){% elif result.price_category_color == 'info' %}#4aa3ff{% else %}var(--text-muted){% endif %};"></div>
+          <div class="gauge-center">
+            <div class="gauge-value">₹{{ '%.2f' % result.predicted_price }}</div>
+            <div class="gauge-unit">Lakhs</div>
+          </div>
+        </div>
+
+        <div class="d-flex justify-content-center mb-3">
+          <span class="badge-category badge-{{ result.price_category_color }}-glow">{{ result.price_category }}</span>
+        </div>
+
+        <div class="result-meta"><span class="k">Prediction Time</span><span class="v">{{ result.prediction_time }}</span></div>
+        <div class="result-meta"><span class="k">Market Value</span><span class="v">{{ result.market_value }}</span></div>
+        <div class="result-meta"><span class="k">Estimated Price</span><span class="v">{{ result.formatted_price }}</span></div>
+        <div class="result-meta"><span class="k">Prediction ID</span><span class="v">#{{ '%05d' % result.id }}</span></div>
+
+        <a href="{{ url_for('history_report', record_id=result.id) }}" class="btn btn-report w-100">
+          <i class="bi bi-file-earmark-arrow-down me-1"></i> Download PDF Report
+        </a>
+      </div>
+    {% else %}
+      <div class="result-panel placeholder-panel">
+        <i class="bi bi-speedometer2"></i>
+        <p class="mb-0">Fill in the panel and run a prediction to see the valuation readout here.</p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+<div class="section-band">
+  <div class="container px-0">
+    <div class="row g-3">
+      <div class="col-md-4">
+        <div class="feature-card">
+          <i class="bi bi-clock-history"></i>
+          <h3>Full History</h3>
+          <p>Every prediction is logged automatically &mdash; searchable and exportable.</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="feature-card">
+          <i class="bi bi-file-earmark-pdf"></i>
+          <h3>PDF Reports</h3>
+          <p>Download a formatted valuation report for any past prediction.</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <a href="{{ url_for('dashboard') }}" class="feature-card feature-card-link">
+          <i class="bi bi-bar-chart-line"></i>
+          <h3>Analytics Dashboard</h3>
+          <p>See totals, price trends, and fuel-type mix across every prediction you've run.</p>
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  const form = document.getElementById('predictForm');
+  const btn = document.getElementById('predictBtn');
+  const btnLabel = document.getElementById('btnLabel');
+
+  form.addEventListener('submit', function (e) {
+    if (!form.checkValidity()) {
+      e.preventDefault();
+      e.stopPropagation();
+      form.classList.add('was-validated');
+      return;
+    }
+    btn.disabled = true;
+    btnLabel.innerHTML = '<span class="spinner-mono me-2"></span> Calculating...';
+  });
+})();
+</script>
+{% endblock %}
